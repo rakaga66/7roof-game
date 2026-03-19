@@ -191,7 +191,8 @@ window.location.href = AUTH_SERVER + '/?redirect=' + window.location.origin + wi
     <script>
         // Auto-start game logic when opening game.html
         window.addEventListener('DOMContentLoaded', () => {
-            startGame();
+    if (typeof initGame === 'function') initGame();
+});
         });
     </script>
 </body>
