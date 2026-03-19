@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>حروف مع هوجاس</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>if (window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';</script>
+    <script src="pdfData.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+        function goToGame() {
+            try {
+                const AUTH_SERVER = 'https://hojas-auth9-production.up.railway.app';
+                const gameURL = 'https://rakaga66.github.io/7rof-game/old.html';
+                const token = localStorage.getItem('hojas_token');
+
+                if (token) {
+                    window.location.href = gameURL;
+                } else {
+                    window.location.href = AUTH_SERVER + '/?redirect=' + encodeURIComponent(gameURL);
+                }
+            } catch (e) {
+                console.error("Auth Error:", e);
+                window.location.href = 'game.html'; // Fallback
+            }
+        }
+    </script>
+    
+    <!-- Auth Check (للموقع نفسه إذا فتح مباشرة) -->
+    <script>
+        (function() {
+            const AUTH_SERVER = 'https://hojas-auth9-production.up.railway.app';
+            
+            // تحقق إذا كان التوكن قادماً في الرابط (Token Handoff)
+            const urlParams = new URLSearchParams(window.location.search);
+            const tokenFromUrl = urlParams.get('token');
+            if (tokenFromUrl) {
+                localStorage.setItem('hojas_token', tokenFromUrl);
+                // تنظيف الرابط من التوكن
+                const cleanUrl = window.location.origin + window.location.pathname;
+                window.history.replaceState({}, document.title, cleanUrl);
+            }
+
+            const token = localStorage.getItem('hojas_token');
+            if (!token && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+                 // إذا لم يكن هناك توكن، نوجهه لتسجيل الدخول (اختياري حسب رغبتك في حماية الصفحة)
+                 // window.location.href = AUTH_SERVER + '/?redirect=' + encodeURIComponent(window.location.href);
+            }
+        })();
+    </script>
+</head>
+
+<body>
+
+    <!-- ═══ SPLASH ═══ -->
+    <div id="splashScreen">
+        <div class="splash-logo">
+            <span class="sl1">حروف</span>
+            <span class="sl2">مع</span>
+            <span class="sl3">هوجاس</span>
+        </div>
+        <div class="splash-bar-wrap">
+            <div class="splash-bar"></div>
+        </div>
+        <span class="splash-tag">بلاي قراوند · هوجاس</span>
+    </div>
+
+    <div class="home-screen" id="homeScreen">
+        <div class="home-content">
+            <div class="logo-home">
+                <span class="logo-line1">حروف</span>
+                <span class="logo-line2">مع</span>
+                <span class="logo-line3">هوجاس</span>
+            </div>
+
+            <button class="home-main-btn" onclick="goToGame()">
+                <span>العب</span>
+            </button>
+
+            <div class="home-secondary-btns">
+                <button class="btn-home-sub" onclick="showSettings()">
+                    <span>⚙️</span><span>إعدادات</span>
+                </button>
+                <button class="btn-home-sub" onclick="showRules()">
+                    <span>💡</span><span>القوانين</span>
+                </button>
+                <a href="index.html" class="btn-home-sub">
+                    <span>🎮</span><span>المتجر</span>
+                </a>
+                <button class="btn-home-sub" onclick="alert('خروج')">
+                    <span>🚪</span><span>خروج</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ===== TRANSITION SCREEN ===== -->
+    <div class="transition-screen" id="transitionScreen" style="display:none;">
+        <div class="hex-bg-pattern"></div>
+        <div class="ts-content" id="tsContent"></div>
+    </div>
+
+    <!-- ===== SIDEBAR ===== -->
+    <aside class="sidebar">
+        <div class="logo">
+            <span class="logo-line1">حروف</span>
+            <span class="logo-line2">مـع</span>
+            <span class="logo-line3">هوجاس</span>
+        </div>
+
+        <div class="round-label" id="roundLabel">
+            <span>الجولة</span>
+            <span id="roundText">الأولى</span>
+            <span class="round-total" id="roundTotal"></span>
+        </div>
+
+        <div class="scores">
+            <div class="score-box" id="scoreBox1">
+                <span class="score-name" id="name1">الفريق ١</span>
+                <span class="score-num" id="score1">0</span>
+            </div>
+            <div class="score-box" id="scoreBox2">
+                <span class="score-name" id="name2">الفريق ٢</span>
+                <span class="score-num" id="score2">0</span>
+            </div>
+        </div>
+
+        <div class="sidebar-question" id="sidebarQuestion" style="display:none;">
+            <div class="sq-header">
+                <span class="sq-title">السؤال</span>
+                <span id="sqNum" class="sq-num"></span>
+            </div>
+            <div id="sqLoading" class="sq-loading" style="display:none;">
+                <div class="sq-spinner"></div>
+                <span style="font-size:0.9rem; margin-top:5px;">جاري التحميل...</span>
+            </div>
+            <div class="sq-content">
+                <div id="sqQuestion" class="sq-text"></div>
+                <div id="sqAnswer" class="sq-answer-wrap" style="display:none;">
+                    <div class="sq-answer-label">الإجابة:</div>
+                    <div id="sqAnswerText" class="sq-answer-text"></div>
+                </div>
+            </div>
+            <div class="sq-actions">
+                <button class="sq-btn sq-btn-reveal" id="sqRevealBtn" onclick="revealAnswer()">إظهار الإجابة</button>
+                <button class="sq-btn sq-btn-next" onclick="nextQuestion()">تغيير ↺</button>
+                <button class="sq-btn sq-btn-close" onclick="closeQuestionPanel()">إغلاق ✕</button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- ===== MAIN AREA ===== -->
+    <main class="main-area">
+        <div class="top-buttons">
+            <div class="game-menu-container">
+                <button class="btn-options" onclick="toggleGameMenu()">⚙️ الإعدادات</button>
+                <div class="game-dropdown" id="gameDropdown" style="display:none;">
+                    <button class="gd-item gd-highlight" onclick="resetGameGrid()">
+                        <span>بداية لعبة جديدة</span> ↺
+                    </button>
+                    <button class="gd-item" onclick="openBuzzerModal()">
+                        <span>الجرس</span> 🔔
+                    </button>
+                    <button class="gd-item" id="gdMuteBtn" onclick="toggleGameSound()">
+                        <span>إيقاف الصوت</span> 🔊
+                    </button>
+                    <button class="gd-item" onclick="showSettings()">
+                        <span>الإعدادات</span> ⚙️
+                    </button>
+                    <button class="gd-item" onclick="location.reload()">
+                        <span>الرجوع للرئيسية</span> 🏠
+                    </button>
+                </div>
+            </div>
+            <button class="btn-shuffle" onclick="shuffleBoard()">🔀 خلط الحروف</button>
+            <div class="timer-display" id="timerDisplay" style="display:none;">
+                <span id="timerTeam"></span>
+                <span id="timerSeconds">0</span>
+            </div>
+        </div>
+
+        <div class="board-wrap">
+            <div class="board-bg"></div>
+            <div class="board-container" id="boardContainer"></div>
+        </div>
+
+        <div class="team-picker" id="teamPicker" style="display:none;">
+            <span class="picker-label">اختر الفريق:</span>
+            <button class="pick-btn" id="pickBtn1" onclick="assignTeam('team1')">الفريق الأول</button>
+            <button class="pick-btn" id="pickBtn2" onclick="assignTeam('team2')">الفريق الثاني</button>
+            <button class="pick-btn btn-reclaim" onclick="unclaimCell()">↺ إرجاع الحرف</button>
+            <button class="pick-btn pick-cancel" onclick="cancelSelect()">✕ إلغاء</button>
+        </div>
+
+        <!-- Buzzer Participant Sub-view (Optional/Legacy within main) -->
+        <div id="buzzerParticipantView" class="home-screen buzzer-participant-view" style="display:none;">
+            <div class="hex-bg-pattern"></div>
+            <div class="logo-area" style="margin-bottom: 20px;">
+                <span class="logo-line3">جرس هوجاس</span>
+            </div>
+
+            <div id="buzzerSetupPhase" class="buzzer-setup-card">
+                <div class="buzzer-card-header">
+                    <h3>انضم للمنافسة</h3>
+                    <p>أدخل اسمك واختر فريقك</p>
+                </div>
+                <input type="text" id="buzzerPlayerName" placeholder="اكتب اسمك هنا..." class="buzzer-input">
+                <div class="buzzer-team-toggle">
+                    <button class="buzzer-team-btn" id="participantPickTeam1"
+                        onclick="participantSelectTeam('team1')">الفريق 1</button>
+                    <button class="buzzer-team-btn" id="participantPickTeam2"
+                        onclick="participantSelectTeam('team2')">الفريق 2</button>
+                </div>
+                <button onclick="participantJoin()" class="btn-pill"
+                    style="box-shadow: 0 4px 15px rgba(0,0,0,0.3);">دخول</button>
+            </div>
+
+            <div id="buzzerActionPhase" class="buzzer-action-phase" style="display:none;">
+                <div id="participantStatus" class="buzzer-status">انتظر المحرز...</div>
+                <button id="mainBuzzBtn" onclick="participantBuzz()">اضغط!</button>
+                <div class="buzzer-hint">سيتم تفعيل الزر عند فتح المحرز للسؤال</div>
+            </div>
+        </div>
+    </main>
+
+    <!-- ===== SETTINGS SCREEN ===== -->
+    <div class="settings-screen" id="settingsScreen" style="display:none;">
+        <div class="hex-bg-pattern"></div>
+        <div class="settings-container">
+            <div class="settings-layout">
+
+                <div class="settings-label">اسم المسابقة:</div>
+                <div class="settings-control">
+                    <input type="text" id="setCompName" class="input-pill" value="هوجاس">
+                </div>
+
+                <div class="settings-label">اسم الفريق الأول:</div>
+                <div class="settings-control">
+                    <input type="text" id="setTeam1Name" class="input-pill" value="الفريق الأول">
+                </div>
+
+                <div class="settings-label">اسم الفريق الثاني:</div>
+                <div class="settings-control">
+                    <input type="text" id="setTeam2Name" class="input-pill" value="الفريق الثاني">
+                </div>
+
+                <div class="settings-label">عدد جولات الفوز:</div>
+                <div class="settings-control toggle-group" id="setRoundsGroup">
+                    <button class="toggle-btn selected" data-value="3">ثلاث جولات</button>
+                    <button class="toggle-btn" data-value="2">جولتين</button>
+                    <button class="toggle-btn" data-value="1">جولة</button>
+                </div>
+
+                <div class="settings-label">نوع المقدم:</div>
+                <div class="settings-control toggle-group" id="setPresenterGroup">
+                    <button class="toggle-btn selected" data-value="ai">مقدم آلي</button>
+                    <button class="toggle-btn" data-value="human">مقدم بشري</button>
+                </div>
+
+                <div class="settings-label">لون الخلايا:</div>
+                <div class="settings-control colors-grid" id="setColorsGroup">
+                    <button class="color-pair selected" data-c1="orange" data-c2="purple">
+                        <div class="c-hex" style="background:#FF9800;"></div>
+                        <div class="c-hex" style="background:#8B5FBF;"></div>
+                    </button>
+                    <button class="color-pair" data-c1="darkblue" data-c2="red">
+                        <div class="c-hex" style="background:#1e3a8a;"></div>
+                        <div class="c-hex" style="background:#EF4444;"></div>
+                    </button>
+                    <button class="color-pair" data-c1="charcoal" data-c2="lightgreen">
+                        <div class="c-hex" style="background:#334155;"></div>
+                        <div class="c-hex" style="background:#a3e635;"></div>
+                    </button>
+                    <button class="color-pair" data-c1="blue" data-c2="pink">
+                        <div class="c-hex" style="background:#3B82F6;"></div>
+                        <div class="c-hex" style="background:#f472b6;"></div>
+                    </button>
+                </div>
+
+                <div class="settings-label">مؤقت الجرس:</div>
+                <div class="settings-control timers-grid">
+                    <div class="timer-box">
+                        <span class="timer-title">وقت الإجابة</span>
+                        <div class="timer-stepper">
+                            <button class="step-btn" onclick="adjTime('ansTime', 1)">+</button>
+                            <div class="step-val"><span id="ansTimeVal">3</span> ثانية</div>
+                            <button class="step-btn" onclick="adjTime('ansTime', -1)">-</button>
+                        </div>
+                    </div>
+                    <div class="timer-box">
+                        <span class="timer-title">وقت الفريق الآخر</span>
+                        <div class="timer-stepper">
+                            <button class="step-btn" onclick="adjTime('otherTime', 1)">+</button>
+                            <div class="step-val"><span id="otherTimeVal">10</span> ثانية</div>
+                            <button class="step-btn" onclick="adjTime('otherTime', -1)">-</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="settings-label">الصوت:</div>
+                <div class="settings-control toggle-group" id="setSoundGroup">
+                    <button class="toggle-btn selected" data-value="on">تشغيل</button>
+                    <button class="toggle-btn" data-value="off">إيقاف</button>
+                </div>
+            </div>
+
+            <button class="btn-save" onclick="saveSettings()">💾 حفظ ورجوع</button>
+        </div>
+    </div>
+
+    <!-- ===== BUZZER SHARE MODAL ===== -->
+    <div id="buzzerShareModal" class="transition-screen modal-backdrop" style="display:none;">
+        <div class="modal-content-wrapper">
+            <button onclick="document.getElementById('buzzerShareModal').style.display='none'"
+                class="modal-close-corner">✕</button>
+            <h2 class="modal-title">جرس الجلسة</h2>
+            <div class="modal-grid">
+                <div class="modal-grid-item">
+                    <div class="modal-item-icon">🔗</div>
+                    <div class="modal-item-label">رابط الجلسة</div>
+                    <button onclick="copyBuzzerLink()" id="copyBuzzerBtn" class="btn-save"
+                        style="padding: 12px 24px; border-radius: 50px;">نسخ الرابط</button>
+                    <div id="modalBuzzerCodeTxt" style="display:none;">- - - -</div>
+                </div>
+                <div class="modal-grid-item modal-grid-item-alt">
+                    <div class="modal-item-icon">📱</div>
+                    <div class="modal-item-label modal-item-label-highlight">باركود</div>
+                    <div id="modalQrcodeBox" class="modal-qrcode-box"></div>
+                </div>
+            </div>
+            <button onclick="document.getElementById('buzzerShareModal').style.display='none'" class="btn-pill"
+                style="background: rgba(0,0,0,0.25);">إغلاق</button>
+        </div>
+    </div>
+
+    <audio id="bgMusic" src="sound/مقدمه.mp4" loop></audio>
+    <audio id="enterSound" src="sound/الدخول لخليه الحروف.mp4"></audio>
+    <audio id="clickSound" src="sound/ضغط.mp4"></audio>
+    <audio id="correctSound" src="sound/اجابه صحيحه.mp4"></audio>
+    <audio id="deleteSound" src="sound/حذف اجابه.mp4"></audio>
+
+    <!-- ===== RULES MODAL ===== -->
+    <div id="rulesModal" class="settings-screen"
+        style="display:none; justify-content: center; align-items: center; background: rgba(15, 5, 25, 0.95); z-index: 11000;">
+        <div class="hex-bg-pattern"></div>
+        <div class="modal-content-wrapper" style="max-height: 85vh; overflow-y: auto;">
+            <button onclick="closeRules()" class="modal-close-corner">✕</button>
+            <h2 class="modal-title">ماهي مسابقة حروف؟</h2>
+            <div
+                style="color: #fff; text-align: right; font-family: 'Cairo', sans-serif; font-size: 1.1rem; line-height: 1.8; padding: 0 10px;">
+                <p><strong> اللعبة:</strong> هي مسابقة ثقافية وذكاء تعتمد على سرعة البديهة والمعرفة، مستوحاة من برنامج
+                    سعودي قديم .</p>
+
+                <h3 style="color: #FFD600; font-family: 'Lalezar', sans-serif; margin-top: 20px;">طريقة اللعب:</h3>
+                <ul style="list-style: none; padding-right: 20px;">
+                    <li>🔹 يتنافس فريقان (البنفسجي والبرتقالي) على لوحة من الحروف السداسية.</li>
+                    <li>🔹 الفريق الذي يختار حرفاً عليه الإجابة على السؤال الخاص بذلك الحرف.</li>
+                    <li>🔹 إذا كانت الإجابة صحيحة، يمتلك الفريق الخلية على اللوحة بلونه.</li>
+                </ul>
+
+                <h3 style="color: #FFD600; font-family: 'Lalezar', sans-serif; margin-top: 20px;">هدف الفوز:</h3>
+                <p>الفريق الفائز هو من يستطيع تكوين <strong>خط متصل</strong> من لونه يربط بين جهتي اللوحة الخاصة به (من
+                    اليمين لليسار أو من الأعلى للأسفل حسب توزيع الفرق).</p>
+
+                <h3 style="color: #FFD600; font-family: 'Lalezar', sans-serif; margin-top: 20px;">الجرس:</h3>
+                <p>يمكن استخدام نظام الجرس (Buzzer) لتحديد من له حق الإجابة أسرع عند قراءة السؤال.</p>
+            </div>
+            <button onclick="closeRules()" class="btn-pill btn-yellow" style="margin-top: 30px;">فهمت، لنبدأ!</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        // Fallback to ensure splash screen disappears and doesn't block clicks
+        setTimeout(() => {
+            const splash = document.getElementById('splashScreen');
+            if (splash) {
+                splash.style.display = 'none';
+                splash.style.pointerEvents = 'none';
+            }
+        }, 3500);
+    </script>
+</body>
+
+</html>
