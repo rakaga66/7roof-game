@@ -13,7 +13,29 @@
     <script>if (window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';</script>
     <script src="pdfData.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <script src="https://buzzer-server-production-331c.up.railway.app/socket.io/socket.io.js"></script>
+
+    <!-- Auth Check -->
+    <script>
+        (function () {
+            const AUTH_SERVER = 'https://hojas-auth9-production.up.railway.app';
+
+            // تحقق إذا كان التوكن قادماً في الرابط (Token Handoff)
+            const urlParams = new URLSearchParams(window.location.search);
+            const tokenFromUrl = urlParams.get('token');
+            if (tokenFromUrl) {
+                localStorage.setItem('hojas_token', tokenFromUrl);
+                // تنظيف الرابط من التوكن
+                const cleanUrl = window.location.origin + window.location.pathname;
+                window.history.replaceState({}, document.title, cleanUrl);
+            }
+
+            const token = localStorage.getItem('hojas_token');
+            const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:';
+            if (!token && !isLocal) {
+                window.location.href = AUTH_SERVER + '/?redirect=' + encodeURIComponent(window.location.href);
+            }
+        })();
+    </script>
 </head>
 
 <body>
@@ -123,26 +145,30 @@
         <div class="settings-container">
             <div class="settings-layout" id="gameSettingsLayout">
                 <!-- Settings content is shared via style and script -->
-                 <h2 style="grid-column: 1 / -1; color: #fff; text-align: center; margin-bottom: 20px;">تعديل الإعدادات</h2>
-                 <!-- We'll keep the same IDs as index.html so script stays simple -->
-                 <div class="settings-label">اسم المسابقة:</div>
-                 <input type="text" id="setCompName" class="input-pill" value="هوجاس">
-                 <!-- (Other settings can be added here as needed) -->
+                <h2 style="grid-column: 1 / -1; color: #fff; text-align: center; margin-bottom: 20px;">تعديل الإعدادات
+                </h2>
+                <!-- We'll keep the same IDs as index.html so script stays simple -->
+                <div class="settings-label">اسم المسابقة:</div>
+                <input type="text" id="setCompName" class="input-pill" value="هوجاس">
+                <!-- (Other settings can be added here as needed) -->
             </div>
-            <button class="btn-save" onclick="document.getElementById('settingsScreen').style.display='none'">💾 حفظ وإغلاق</button>
+            <button class="btn-save" onclick="document.getElementById('settingsScreen').style.display='none'">💾 حفظ
+                وإغلاق</button>
         </div>
     </div>
 
     <!-- ===== BUZZER SHARE MODAL ===== -->
     <div id="buzzerShareModal" class="transition-screen modal-backdrop" style="display:none;">
         <div class="modal-content-wrapper">
-            <button onclick="document.getElementById('buzzerShareModal').style.display='none'" class="modal-close-corner">✕</button>
+            <button onclick="document.getElementById('buzzerShareModal').style.display='none'"
+                class="modal-close-corner">✕</button>
             <h2 class="modal-title">جرس الجلسة</h2>
             <div class="modal-grid">
                 <div class="modal-grid-item">
                     <div class="modal-item-icon">🔗</div>
                     <div class="modal-item-label">رابط الجلسة</div>
-                    <button onclick="copyBuzzerLink()" id="copyBuzzerBtn" class="btn-save" style="padding: 12px 24px; border-radius: 50px;">نسخ الرابط</button>
+                    <button onclick="copyBuzzerLink()" id="copyBuzzerBtn" class="btn-save"
+                        style="padding: 12px 24px; border-radius: 50px;">نسخ الرابط</button>
                     <div id="modalBuzzerCodeTxt" style="display:none;">- - - -</div>
                 </div>
                 <div class="modal-grid-item modal-grid-item-alt">
@@ -151,7 +177,8 @@
                     <div id="modalQrcodeBox" class="modal-qrcode-box"></div>
                 </div>
             </div>
-            <button onclick="document.getElementById('buzzerShareModal').style.display='none'" class="btn-pill" style="background: rgba(0,0,0,0.25);">إغلاق</button>
+            <button onclick="document.getElementById('buzzerShareModal').style.display='none'" class="btn-pill"
+                style="background: rgba(0,0,0,0.25);">إغلاق</button>
         </div>
     </div>
 
@@ -165,7 +192,7 @@
     <script>
         // Auto-start game logic when opening game.html
         window.addEventListener('DOMContentLoaded', () => {
-             startGame();
+            startGame();
         });
     </script>
 </body>
