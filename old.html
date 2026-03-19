@@ -10,10 +10,25 @@
     <script>if (window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';</script>
     <script src="pdfData.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    
+    <!-- Auth Check (Automatic Redirect) -->
+    <script>
+        (function() {
+            const AUTH_SERVER = 'https://hojas-auth9-production.up.railway.app';
+            const token = localStorage.getItem('hojas_token');
+            const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            
+            if (!token && !isLocal) {
+                window.location.href = AUTH_SERVER + '/?redirect=' + encodeURIComponent(window.location.href);
+            }
+        })();
+    </script>
+    
+    <script>
         function goToGame() {
             try {
                 const AUTH_SERVER = 'https://hojas-auth9-production.up.railway.app';
-                const gameURL = 'https://rakaga66.github.io/7rof-game/old.html';
+                const gameURL = new URL('game.html', window.location.href).href;
                 const token = localStorage.getItem('hojas_token');
 
                 if (token) {
@@ -23,7 +38,7 @@
                 }
             } catch (e) {
                 console.error("Auth Error:", e);
-                window.location.href = 'game.html'; // Fallback
+                window.location.href = 'game.html';
             }
         }
     </script>
