@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>حروف مع هوجاس - اللعبة</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>if (window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';</script>
+    <script src="pdfData.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://buzzer-server-production-331c.up.railway.app/socket.io/socket.io.js"></script>
+</head>
+
+<body>
+
+    <!-- ===== TRANSITION SCREEN ===== -->
+    <div class="transition-screen" id="transitionScreen" style="display:none;">
+        <div class="hex-bg-pattern"></div>
+        <div class="ts-content" id="tsContent"></div>
+    </div>
+
+    <!-- ===== SIDEBAR ===== -->
+    <aside class="sidebar">
+        <div class="logo">
+            <span class="logo-line1">حروف</span>
+            <span class="logo-line2">مـع</span>
+            <span class="logo-line3">هوجاس</span>
+        </div>
+
+        <div class="round-label" id="roundLabel">
+            <span>الجولة</span>
+            <span id="roundText">الأولى</span>
+            <span class="round-total" id="roundTotal"></span>
+        </div>
+
+        <div class="scores">
+            <div class="score-box" id="scoreBox1">
+                <span class="score-name" id="name1">الفريق ١</span>
+                <span class="score-num" id="score1">0</span>
+            </div>
+            <div class="score-box" id="scoreBox2">
+                <span class="score-name" id="name2">الفريق ٢</span>
+                <span class="score-num" id="score2">0</span>
+            </div>
+        </div>
+
+        <div class="sidebar-question" id="sidebarQuestion" style="display:none;">
+            <div class="sq-header">
+                <span class="sq-title">السؤال</span>
+                <span id="sqNum" class="sq-num"></span>
+            </div>
+            <div id="sqLoading" class="sq-loading" style="display:none;">
+                <div class="sq-spinner"></div>
+                <span style="font-size:0.9rem; margin-top:5px;">جاري التحميل...</span>
+            </div>
+            <div class="sq-content">
+                <div id="sqQuestion" class="sq-text"></div>
+                <div id="sqAnswer" class="sq-answer-wrap" style="display:none;">
+                    <div class="sq-answer-label">الإجابة:</div>
+                    <div id="sqAnswerText" class="sq-answer-text"></div>
+                </div>
+            </div>
+            <div class="sq-actions">
+                <button class="sq-btn sq-btn-reveal" id="sqRevealBtn" onclick="revealAnswer()">إظهار الإجابة</button>
+                <button class="sq-btn sq-btn-next" onclick="nextQuestion()">تغيير ↺</button>
+                <button class="sq-btn sq-btn-close" onclick="closeQuestionPanel()">إغلاق ✕</button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- ===== MAIN AREA ===== -->
+    <main class="main-area" style="display: flex;">
+        <div class="top-buttons">
+            <div class="game-menu-container">
+                <button class="btn-options" onclick="toggleGameMenu()">⚙️ الإعدادات</button>
+                <div class="game-dropdown" id="gameDropdown" style="display:none;">
+                    <button class="gd-item gd-highlight" onclick="resetGameGrid()">
+                        <span>بداية لعبة جديدة</span> ↺
+                    </button>
+                    <button class="gd-item" onclick="openBuzzerModal()">
+                        <span>الجرس</span> 🔔
+                    </button>
+                    <button class="gd-item" id="gdMuteBtn" onclick="toggleGameSound()">
+                        <span>إيقاف الصوت</span> 🔊
+                    </button>
+                    <button class="gd-item" onclick="showSettings()">
+                        <span>الإعدادات</span> ⚙️
+                    </button>
+                    <button class="gd-item" onclick="window.location.href='old.html'">
+                        <span>الرجوع للرئيسية</span> 🏠
+                    </button>
+                </div>
+            </div>
+            <button class="btn-shuffle" onclick="shuffleBoard()">🔀 خلط الحروف</button>
+            <div class="timer-display" id="timerDisplay" style="display:none;">
+                <span id="timerTeam"></span>
+                <span id="timerSeconds">0</span>
+            </div>
+        </div>
+
+        <div class="board-wrap">
+            <div class="board-bg"></div>
+            <div class="board-container" id="boardContainer"></div>
+        </div>
+
+        <div class="team-picker" id="teamPicker" style="display:none;">
+            <span class="picker-label">اختر الفريق:</span>
+            <button class="pick-btn" id="pickBtn1" onclick="assignTeam('team1')">الفريق الأول</button>
+            <button class="pick-btn" id="pickBtn2" onclick="assignTeam('team2')">الفريق الثاني</button>
+            <button class="pick-btn btn-reclaim" onclick="unclaimCell()">↺ إرجاع الحرف</button>
+            <button class="pick-btn pick-cancel" onclick="cancelSelect()">✕ إلغاء</button>
+        </div>
+    </main>
+
+    <!-- ===== SETTINGS SCREEN ===== -->
+    <div class="settings-screen" id="settingsScreen" style="display:none;">
+        <div class="hex-bg-pattern"></div>
+        <div class="settings-container">
+            <div class="settings-layout" id="gameSettingsLayout">
+                <!-- Settings content is shared via style and script -->
+                 <h2 style="grid-column: 1 / -1; color: #fff; text-align: center; margin-bottom: 20px;">تعديل الإعدادات</h2>
+                 <!-- We'll keep the same IDs as index.html so script stays simple -->
+                 <div class="settings-label">اسم المسابقة:</div>
+                 <input type="text" id="setCompName" class="input-pill" value="هوجاس">
+                 <!-- (Other settings can be added here as needed) -->
+            </div>
+            <button class="btn-save" onclick="document.getElementById('settingsScreen').style.display='none'">💾 حفظ وإغلاق</button>
+        </div>
+    </div>
+
+    <!-- ===== BUZZER SHARE MODAL ===== -->
+    <div id="buzzerShareModal" class="transition-screen modal-backdrop" style="display:none;">
+        <div class="modal-content-wrapper">
+            <button onclick="document.getElementById('buzzerShareModal').style.display='none'" class="modal-close-corner">✕</button>
+            <h2 class="modal-title">جرس الجلسة</h2>
+            <div class="modal-grid">
+                <div class="modal-grid-item">
+                    <div class="modal-item-icon">🔗</div>
+                    <div class="modal-item-label">رابط الجلسة</div>
+                    <button onclick="copyBuzzerLink()" id="copyBuzzerBtn" class="btn-save" style="padding: 12px 24px; border-radius: 50px;">نسخ الرابط</button>
+                    <div id="modalBuzzerCodeTxt" style="display:none;">- - - -</div>
+                </div>
+                <div class="modal-grid-item modal-grid-item-alt">
+                    <div class="modal-item-icon">📱</div>
+                    <div class="modal-item-label modal-item-label-highlight">باركود</div>
+                    <div id="modalQrcodeBox" class="modal-qrcode-box"></div>
+                </div>
+            </div>
+            <button onclick="document.getElementById('buzzerShareModal').style.display='none'" class="btn-pill" style="background: rgba(0,0,0,0.25);">إغلاق</button>
+        </div>
+    </div>
+
+    <audio id="bgMusic" src="sound/مقدمه.mp4" loop></audio>
+    <audio id="enterSound" src="sound/الدخول لخليه الحروف.mp4"></audio>
+    <audio id="clickSound" src="sound/ضغط.mp4"></audio>
+    <audio id="correctSound" src="sound/اجابه صحيحه.mp4"></audio>
+    <audio id="deleteSound" src="sound/حذف اجابه.mp4"></audio>
+
+    <script src="script.js"></script>
+    <script>
+        // Auto-start game logic when opening game.html
+        window.addEventListener('DOMContentLoaded', () => {
+             startGame();
+        });
+    </script>
+</body>
+
+</html>
